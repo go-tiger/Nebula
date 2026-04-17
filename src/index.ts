@@ -180,7 +180,13 @@ const generateServerCommand: CommandModule = {
                 describe: 'Fabric version.',
                 type: 'string'
             })
+            .option('neoforge', {
+                describe: 'NeoForge version.',
+                type: 'string'
+            })
             .conflicts('forge', 'fabric')
+            .conflicts('forge', 'neoforge')
+            .conflicts('fabric', 'neoforge')
     },
     handler: async (argv) => {
         argv.root = getRoot()
@@ -188,7 +194,8 @@ const generateServerCommand: CommandModule = {
         logger.debug(`Root set to ${argv.root}`)
         logger.debug(`Generating server ${argv.id} for Minecraft ${argv.version}.`,
             `\n\t└ Forge version: ${argv.forge}`,
-            `\n\t└ Fabric version: ${argv.fabric}`
+            `\n\t└ Fabric version: ${argv.fabric}`,
+            `\n\t└ NeoForge version: ${argv.neoforge}`
         )
 
         const minecraftVersion = new MinecraftVersion(argv.version as string)
@@ -222,13 +229,19 @@ const generateServerCommand: CommandModule = {
             }
         }
 
+        if(argv.neoforge != null) {
+            // NeoForge version resolution can be added here if needed in the future
+            // For now, use the version as provided
+        }
+
         const serverStruct = new ServerStructure(argv.root as string, getBaseURL(), false, false)
         await serverStruct.createServer(
             argv.id as string,
             minecraftVersion,
             {
                 forgeVersion: argv.forge as string,
-                fabricVersion: argv.fabric as string
+                fabricVersion: argv.fabric as string,
+                neoForgeVersion: argv.neoforge as string
             }
         )
     }
@@ -260,11 +273,15 @@ const generateServerCurseForgeCommand: CommandModule = {
 
         const minecraftVersion = new MinecraftVersion(modpackManifest.minecraft.version)
 
-        // Extract forge version
+        // Extract mod loader version
         // TODO Support fabric
         const forgeModLoader = modpackManifest.minecraft.modLoaders.find(({ id }) => id.toLowerCase().startsWith('forge-'))
         const forgeVersion = forgeModLoader != null ? forgeModLoader.id.substring('forge-'.length) : undefined
         logger.debug(`Forge version set to ${forgeVersion}`)
+
+        const neoForgeModLoader = modpackManifest.minecraft.modLoaders.find(({ id }) => id.toLowerCase().startsWith('neoforge-'))
+        const neoForgeVersion = neoForgeModLoader != null ? neoForgeModLoader.id.substring('neoforge-'.length) : undefined
+        logger.debug(`NeoForge version set to ${neoForgeVersion}`)
 
         const serverStruct = new ServerStructure(argv.root as string, getBaseURL(), false, false)
         const createServerResult = await serverStruct.createServer(
@@ -272,7 +289,8 @@ const generateServerCurseForgeCommand: CommandModule = {
             minecraftVersion,
             {
                 version: modpackManifest.version,
-                forgeVersion
+                forgeVersion,
+                neoForgeVersion
             }
         )
 

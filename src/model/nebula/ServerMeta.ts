@@ -1,4 +1,4 @@
-import { Server } from 'helios-distribution-types'
+import { Architecture, JdkDistribution, Platform, Server } from 'helios-distribution-types'
 
 export interface UntrackedFilesOption {
     /**
@@ -16,6 +16,7 @@ export interface ServerMetaOptions {
     version?: string
     forgeVersion?: string
     fabricVersion?: string
+    neoForgeVersion?: string
 }
 
 export function getDefaultServerMeta(id: string, version: string, options?: ServerMetaOptions): ServerMeta {
@@ -24,8 +25,8 @@ export function getDefaultServerMeta(id: string, version: string, options?: Serv
         meta: {
             version: options?.version ?? '1.0.0',
             name: `${id} (Minecraft ${version})`,
-            description: `${id} Running Minecraft ${version}`,
-            icon: 'How to set the server icon: https://github.com/dscalzi/Nebula#setting-the-server-icon',
+            description: `Minecraft ${version}`,
+            icon: 'https://github.com/mchdistro/레포/raw/main/server-icon.png',
             address: 'localhost:25565',
             discord: {
                 shortId: '<FILL IN OR REMOVE DISCORD OBJECT>',
@@ -33,7 +34,22 @@ export function getDefaultServerMeta(id: string, version: string, options?: Serv
                 largeImageKey: '<FILL IN OR REMOVE DISCORD OBJECT>'
             },
             mainServer: false,
-            autoconnect: false
+            autoconnect: false,
+            javaOptions: {
+                supported: "=>21",
+                suggestedMajor: 21,
+                platformOptions: [
+                    {
+                        platform: Platform.WIN32,
+                        architecture: Architecture.X64,
+                        distribution: JdkDistribution.TEMURIN
+                    }
+                ],
+                ram: {
+                    minimum: 4096,
+                    recommended: 8192
+                }
+            }
         }
     }
 
@@ -51,8 +67,15 @@ export function getDefaultServerMeta(id: string, version: string, options?: Serv
         }
     }
 
+    if(options?.neoForgeVersion) {
+        servMeta.meta.description = `${servMeta.meta.description} (NeoForge v${options.neoForgeVersion})`
+        servMeta.neoforge = {
+            version: options.neoForgeVersion
+        }
+    }
+
     // Add empty untracked files.
-    servMeta.untrackedFiles = []
+    servMeta.untrackedFiles = [{ appliesTo: ['files'], patterns: ['options.txt'] }];
 
     return servMeta
 }
@@ -92,6 +115,17 @@ export interface ServerMeta {
         /**
          * The fabric loader version. This does NOT include the minecraft version.
          * Ex. 0.14.18
+         */
+        version: string
+    }
+
+    /**
+     * Properties related to NeoForge.
+     */
+    neoforge?: {
+        /**
+         * The NeoForge version. This does NOT include the minecraft version.
+         * Ex. 20.4.80
          */
         version: string
     }
